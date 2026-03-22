@@ -1,0 +1,112 @@
+! ============================================
+! Floor 1 Switch - Administration VLAN
+! Cisco Catalyst 2960
+! Location: Kabul, Afghanistan - Qamar High School
+! Date: 2025-03-22
+! ============================================
+
+enable
+configure terminal
+
+! Device Identity
+hostname Floor1-Admin-Switch
+banner motd #
+Authorized Access Only - Administration Floor
+#
+
+! VLAN 10 - Administration (High Security)
+vlan 10
+ name ADMINISTRATION
+exit
+
+! VLAN 99 - Native/Unused
+vlan 99
+ name NATIVE_VLAN
+exit
+
+! Port Security Configuration
+! Admin PC 1 - Principal Office
+interface FastEthernet0/1
+ description Principal-Office
+ switchport mode access
+ switchport access vlan 10
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security mac-address sticky
+ switchport port-security violation shutdown
+ spanning-tree portfast
+ no shutdown
+exit
+
+! Admin PC 2 - Vice Principal
+interface FastEthernet0/2
+ description Vice-Principal-Office
+ switchport mode access
+ switchport access vlan 10
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security mac-address sticky
+ switchport port-security violation shutdown
+ spanning-tree portfast
+ no shutdown
+exit
+
+! Admin PC 3 - Finance Office
+interface FastEthernet0/3
+ description Finance-Office
+ switchport mode access
+ switchport access vlan 10
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security mac-address sticky
+ switchport port-security violation shutdown
+ spanning-tree portfast
+ no shutdown
+exit
+
+! Admin PC 4 - Reception
+interface FastEthernet0/4
+ description Reception
+ switchport mode access
+ switchport access vlan 10
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security mac-address sticky
+ switchport port-security violation restrict
+ spanning-tree portfast
+ no shutdown
+exit
+
+! Trunk Uplink to Core Switch
+interface GigabitEthernet0/1
+ description Uplink-Core-Switch
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,99
+ switchport trunk native vlan 99
+ switchport nonegotiate
+ no shutdown
+exit
+
+! Disable unused ports
+interface range FastEthernet0/5-24
+ description UNUSED
+ shutdown
+exit
+
+! Security Features
+ip default-gateway 192.168.10.1
+service password-encryption
+enable secret AdminSwitch2025!
+line console 0
+ password ConsolePass123!
+ login
+exit
+
+! Save Configuration
+end
+write memory
+
+! Verification Commands
+show vlan brief
+show port-security
+show interfaces status

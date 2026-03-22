@@ -1,0 +1,117 @@
+! ============================================
+! Floor 2 Switch - Teachers VLAN
+! Cisco Catalyst 2960
+! Location: Kabul, Afghanistan - Qamar High School
+! Date: 2025-03-22
+! ============================================
+
+enable
+configure terminal
+
+hostname Floor2-Teachers-Switch
+banner motd #
+Teachers Network - Authorized Faculty Only
+#
+
+! VLAN 20 - Teachers
+vlan 20
+ name TEACHERS
+exit
+
+! VLAN 99 - Native
+vlan 99
+ name NATIVE_VLAN
+exit
+
+! Teacher PC 1
+interface FastEthernet0/1
+ description Teacher-1
+ switchport mode access
+ switchport access vlan 20
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security mac-address sticky
+ switchport port-security violation restrict
+ spanning-tree portfast
+ no shutdown
+exit
+
+! Teacher PC 2
+interface FastEthernet0/2
+ description Teacher-2
+ switchport mode access
+ switchport access vlan 20
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security mac-address sticky
+ switchport port-security violation restrict
+ spanning-tree portfast
+ no shutdown
+exit
+
+! Teacher PC 3
+interface FastEthernet0/3
+ description Teacher-3
+ switchport mode access
+ switchport access vlan 20
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security mac-address sticky
+ switchport port-security violation restrict
+ spanning-tree portfast
+ no shutdown
+exit
+
+! Teacher PC 4
+interface FastEthernet0/4
+ description Teacher-4
+ switchport mode access
+ switchport access vlan 20
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security mac-address sticky
+ switchport port-security violation restrict
+ spanning-tree portfast
+ no shutdown
+exit
+
+! Teacher PC 5
+interface FastEthernet0/5
+ description Teacher-5
+ switchport mode access
+ switchport access vlan 20
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security mac-address sticky
+ switchport port-security violation restrict
+ spanning-tree portfast
+ no shutdown
+exit
+
+! Trunk Uplink
+interface GigabitEthernet0/1
+ description Uplink-Core-Switch
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,99
+ switchport trunk native vlan 99
+ switchport nonegotiate
+ no shutdown
+exit
+
+! Disable unused ports
+interface range FastEthernet0/6-24
+ description UNUSED
+ shutdown
+exit
+
+! Security
+ip default-gateway 192.168.20.1
+service password-encryption
+enable secret TeacherSwitch2025!
+line console 0
+ password ConsolePass123!
+ login
+exit
+
+end
+write memory

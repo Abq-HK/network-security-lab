@@ -1,0 +1,211 @@
+! ============================================
+! Core Router - Main Gateway & Inter-VLAN Routing
+! Cisco 2911 Integrated Services Router
+! Location: Kabul, Afghanistan - Qamar High School
+! Date: 2025-03-22
+! ============================================
+
+enable
+configure terminal
+
+hostname Core-Router-School
+banner motd #
+Core Network Infrastructure - Authorized Engineers Only
+#
+
+! ============================================
+! INTERFACES
+! ============================================
+
+! WAN Interface - Internet Connection
+interface GigabitEthernet0/0
+ description WAN-Internet-ISP
+ ip address dhcp
+ ip nat outside
+ ip access-group WAN-IN in
+ no shutdown
+exit
+
+! LAN Interface - Core Switch Connection
+interface GigabitEthernet0/1
+ description LAN-Core-Switch-Trunk
+ no ip address
+ no shutdown
+exit
+
+! ============================================
+! VLAN INTERFACES (SVI)
+! ============================================
+
+! VLAN 10 - Administration Gateway
+interface GigabitEthernet0/1.10
+ description VLAN10-ADMIN-Gateway
+ encapsulation dot1Q 10
+ ip address 192.168.10.1 255.255.255.0
+ ip helper-address 192.168.10.2
+ ip nat inside
+ no shutdown
+exit
+
+! VLAN 20 - Teachers Gateway
+interface GigabitEthernet0/1.20
+ description VLAN20-TEACHERS-Gateway
+ encapsulation dot1Q 20
+ ip address 192.168.20.1 255.255.255.0
+ ip helper-address 192.168.20.2
+ ip nat inside
+ no shutdown
+exit
+
+! VLAN 30 - Students Gateway
+interface GigabitEthernet0/1.30
+ description VLAN30-STUDENTS-Gateway
+ encapsulation dot1Q 30
+ ip address 192.168.30.1 255.255.255.0
+ ip helper-address 192.168.30.2
+ ip nat inside
+ ip access-group STUDENT-RESTRICT in
+ no shutdown
+exit
+
+! VLAN 99 - Native/Management
+interface GigabitEthernet0/1.99
+ description VLAN99-NATIVE
+ encapsulation dot1Q 99 native
+ ip address 192.168.99.1 255.255.255.0
+ no shutdown
+exit
+
+! ============================================
+! DHCP CONFIGURATION
+! ============================================
+
+! DHCP Pool - Administration
+ip dhcp pool VLAN10-ADMIN
+ network 192.168.10.0 255.255.255.0
+ default-router 192.168.10.1
+ dns-server 8.8.8.8 8.8.4.4
+ domain-name admin.school.local
+ lease 8
+exit
+
+! DHCP Pool - Teachers
+ip dhcp pool VLAN20-TEACHERS
+ network 192.168.20.0 255.255.255.0
+ default-router 192.168.20.1
+ dns-server 8.8.8.8 8.8.4.4
+ domain-name teachers.school.local
+ lease 8
+exit
+
+! DHCP Pool - Students
+ip dhcp pool VLAN30-STUDENTS
+ network 192.168.30.0 255.255.255.0
+ default-router 192.168.30.1
+ dns-server 8.8.8.8 8.8.4.4
+ domain-name students.school.local
+ lease 4
+exit
+
+! Exclude static IPs
+ip dhcp excluded-address 192.168.10.1 192.168.10.10
+ip dhcp excluded-address 192.168.20.1 192.168.20.10
+ip dhcp excluded-address 192.168.30.1 192.168.30.10
+
+! ============================================
+! ACCESS CONTROL LISTS (ACL)
+! ============================================
+
+! ACL - WAN Inbound (Block external threats)
+ip access-list extended WAN-IN
+ permit tcp any any established
+ permit udp any eq 53 any
+ deny ip 10.0.0.0 0.255.255.255 any
+ deny ip 172.16.0.0 0.15.255.255 any
+ deny ip 192.168.0.0 0.0.255.255 any
+ deny ip 127.0.0.0 0.255.255.255 any
+ permit icmp any any echo-reply
+ deny ip any any log
+exit
+
+! ACL - Student Restrictions (Block inappropriate sites)
+ip access-list extended STUDENT-RESTRICT
+ permit tcp 192.168.30.0 0.0.0.255 any eq 80
+ permit tcp 192.168.30.0 0.0.0.255 any eq 443
+ permit udp 192.168.30.0 0.0.0.255 any eq 53
+ deny tcp 192.168.30.0 0.0.0.255 192.168.10.0 0.0.0.255
+ deny tcp 192.168.30.0 0.0.0.255 192.168.20.0 0.0.0.255 eq 22
+ deny tcp 192.168.30.0 0.0.0.255 192.168.20.0 0.0.0.255 eq 3389
+ permit icmp any any
+ deny ip any any log
+exit
+
+! ============================================
+! NAT CONFIGURATION
+! ============================================
+
+! NAT Overload (PAT)
+ip nat inside source list NAT-TRAFFIC interface GigabitEthernet0/0 overload
+
+! ACL for NAT
+ip access-list standard NAT-TRAFFIC
+ permit 192.168.10.0 0.0.0.255
+ permit 192.168.20.0 0.0.0.255
+ permit 192.168.30.0 0.0.0.255
+ permit 192.168.99.0 0.0.0.255
+exit
+
+! ============================================
+! ROUTING
+! ============================================
+
+! Default Route to Internet
+ip route 0.0.0.0 0.0.0.0 GigabitEthernet0/0 dhcp
+
+! ============================================
+! SECURITY
+! ============================================
+
+! Enable Password Encryption
+service password-encryption
+
+! Enable Secret (Hashed)
+enable secret CoreRouter2025Secure!
+
+! Console Access
+line console 0
+ password ConsoleSecure123!
+ login
+ logging synchronous
+exit
+
+! VTY Access (Remote SSH - if enabled)
+line vty 0 4
+ password VTYSecure123!
+ login
+ transport input none
+exit
+
+! Disable unused services
+no ip http server
+no ip http secure-server
+no cdp run
+
+! Logging
+logging buffered 4096
+logging console critical
+
+! ============================================
+! SAVE
+! ============================================
+
+end
+write memory
+
+! Verification
+show ip interface brief
+show ip route
+show ip nat translations
+show access-lists
+show dhcp pool
+show vlan

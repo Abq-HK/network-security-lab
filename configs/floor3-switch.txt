@@ -1,0 +1,83 @@
+! ============================================
+! Floor 3 Switch - Students VLAN
+! Cisco Catalyst 2960
+! Location: Kabul, Afghanistan - Qamar High School
+! Date: 2025-03-22
+! ============================================
+
+enable
+configure terminal
+
+hostname Floor3-Students-Switch
+banner motd #
+Student Computer Lab - Educational Use Only
+#
+
+! VLAN 30 - Students
+vlan 30
+ name STUDENTS
+exit
+
+! VLAN 99 - Native
+vlan 99
+ name NATIVE_VLAN
+exit
+
+! Lab PC 1-8 (Student Computers)
+interface range FastEthernet0/1-8
+ description Student-Lab-PC
+ switchport mode access
+ switchport access vlan 30
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security mac-address sticky
+ switchport port-security violation restrict
+ spanning-tree portfast
+ no shutdown
+exit
+
+! Lab PC 9-16 (More Students)
+interface range FastEthernet0/9-16
+ description Student-Lab-PC
+ switchport mode access
+ switchport access vlan 30
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security mac-address sticky
+ switchport port-security violation restrict
+ spanning-tree portfast
+ no shutdown
+exit
+
+! Trunk Uplink
+interface GigabitEthernet0/1
+ description Uplink-Core-Switch
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,99
+ switchport trunk native vlan 99
+ switchport nonegotiate
+ no shutdown
+exit
+
+! Disable unused ports
+interface range FastEthernet0/17-24
+ description UNUSED
+ shutdown
+exit
+
+! Security - More Restrictive for Students
+ip default-gateway 192.168.30.1
+service password-encryption
+enable secret StudentSwitch2025!
+line console 0
+ password ConsolePass123!
+ login
+exit
+
+! Time-based Access Control (School Hours Only)
+! time-range SCHOOL-HOURS
+!  periodic weekdays 7:00 to 17:00
+! exit
+
+end
+write memory

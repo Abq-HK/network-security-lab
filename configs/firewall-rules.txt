@@ -1,0 +1,155 @@
+! ============================================
+! Firewall Rules - Network Security Policy
+! Cisco IOS Firewall / Zone-Based Policy
+! Location: Kabul, Afghanistan - Qamar High School
+! Date: 2025-03-22
+! ============================================
+
+! ============================================
+! SECURITY ZONES
+! ============================================
+
+! zone security INSIDE
+!  description Internal Network
+! zone security OUTSIDE
+!  description Internet/WAN
+! zone security DMZ
+!  description Public Services (if any)
+
+! ============================================
+! CLASS-MAPS (Traffic Classification)
+! ============================================
+
+class-map type inspect match-any HTTP-TRAFFIC
+ match protocol http
+ match protocol https
+exit
+
+class-map type inspect match-any DNS-TRAFFIC
+ match protocol dns
+exit
+
+class-map type inspect match-any MANAGEMENT-TRAFFIC
+ match protocol ssh
+ match protocol telnet
+exit
+
+class-map type inspect match-any PING-TRAFFIC
+ match protocol icmp
+exit
+
+class-map type inspect match-any DENIED-TRAFFIC
+ match protocol torrent
+ match protocol skype
+ match protocol youtube
+exit
+
+! ============================================
+! POLICY-MAPS (Action Definition)
+! ============================================
+
+policy-map type inspect INTERNET-ACCESS
+ class type inspect HTTP-TRAFFIC
+  inspect
+ class type inspect DNS-TRAFFIC
+  inspect
+ class type inspect PING-TRAFFIC
+  pass
+ class type inspect DENIED-TRAFFIC
+  drop log
+ class class-default
+  drop log
+exit
+
+! ============================================
+! ZONE-PAIRS (Apply Policy)
+! ============================================
+
+! zone-pair security INSIDE-TO-OUTSIDE source INSIDE destination OUTSIDE
+!  service-policy type inspect INTERNET-ACCESS
+! zone-pair security OUTSIDE-TO-INSIDE source OUTSIDE destination INSIDE
+!  service-policy type inspect DENY-ALL
+
+! ============================================
+! ACCESS LISTS (Alternative to ZBF)
+! ============================================
+
+! Extended ACL - Internet Outbound
+ip access-list extended INTERNET-OUTBOUND
+ ! Allow HTTP/HTTPS for all
+ permit tcp any any eq 80
+ permit tcp any any eq 443
+ permit udp any any eq 53
+ ! Allow specific educational sites
+ permit tcp any host 13.107.42.14 eq 443
+ ! Deny social media (examples)
+ deny tcp any any eq 5060
+ deny tcp any any range 5190 5200
+ ! Log violations
+ deny ip any any log
+exit
+
+! Standard ACL - Management Access
+ip access-list standard MANAGEMENT-ACCESS
+ permit 192.168.10.0 0.0.0.255
+ deny any log
+exit
+
+! ============================================
+! PORT SECURITY RULES (Switch Level)
+! ============================================
+
+! Applied on each switch interface:
+! switchport port-security
+! switchport port-security maximum 2
+! switchport port-security mac-address sticky
+! switchport port-security violation shutdown
+
+! ============================================
+! BPDU GUARD (Spanning Tree Protection)
+! ============================================
+
+! On all portfast ports:
+! spanning-tree bpduguard enable
+! spanning-tree portfast bpduguard default
+
+! ============================================
+! DHCP SNOOPING (Prevent Rogue DHCP)
+! ============================================
+
+! ip dhcp snooping
+! ip dhcp snooping vlan 10,20,30
+! no ip dhcp snooping information option
+! interface GigabitEthernet0/1
+!  ip dhcp snooping trust
+! exit
+
+! ============================================
+! DYNAMIC ARP INSPECTION (Prevent ARP Spoofing)
+! ============================================
+
+! ip arp inspection vlan 10,20,30
+! ip arp inspection validate src-mac dst-mac ip
+! interface GigabitEthernet0/1
+!  ip arp inspection trust
+! exit
+
+! ============================================
+! IP SOURCE GUARD (Prevent IP Spoofing)
+! ============================================
+
+! interface range FastEthernet0/1-24
+!  ip verify source port-security
+! exit
+
+! ============================================
+! SUMMARY OF SECURITY LAYERS
+! ============================================
+
+! Layer 1: Physical - Port security, MAC binding
+! Layer 2: Data Link - BPDU guard, DHCP snooping, DAI
+! Layer 3: Network - ACLs, VLAN isolation, IP source guard
+! Layer 4: Transport - Firewall rules, port filtering
+! Layer 7: Application - Content filtering (HTTP inspection)
+
+! Total Security Measures: 15+
