@@ -16,4 +16,12 @@ This project documents the design and implementation of a **secure 3-floor schoo
 - ✅ 20+ concurrent users
 - ✅ 3 VLANs with inter-routing
 
-## 🏗️ Network Architecture
+Settings → Topics → Add topics:
+- cisco
+- network-security
+- python
+- vlan
+- cybersecurity
+- network-engineering
+- packet-tracer
+- afghanistan
